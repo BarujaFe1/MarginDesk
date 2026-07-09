@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MarginDesk — Proposal Margin Desk",
+  title: "MarginDesk — Live Demo | Proposal Margin Desk",
   description:
-    "Turn service proposals into margin decisions: price floor, scope risk, planned hours and profit tracking.",
+    "MVP lab: turn service proposals into margin decisions — price floor, scope risk, planned hours and profit tracking. Three synthetic demo proposals.",
 };
 
 export default function RootLayout({

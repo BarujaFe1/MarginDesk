@@ -1,31 +1,53 @@
-import type { DemoResponse, ProposalInput, MarginBreakdown } from "@/types";
+import {
+  buildDemoBundle,
+  calculateMargin as calcLocal,
+  cloneProposal,
+} from "@/lib/engine";
+import type { DemoResponse, MarginBreakdown, ProposalInput } from "@/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(`API ${path} failed (${res.status})`);
+/**
+ * Prefer client-side margin engine for the Vercel lab demo.
+ * Optional FastAPI backend when NEXT_PUBLIC_API_URL is set (local full stack).
+ */
+async function tryBackend<T>(path: string, init?: RequestInit): Promise<T | null> {
+  if (!API_URL) return null;
+  try {
+    const res = await fetch(`${API_URL}${path}`, { cache: "no-store", ...init });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
   }
-  return res.json() as Promise<T>;
 }
 
-async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+export async function fetchDemo(activeId?: string): Promise<DemoResponse> {
+  const remote = await tryBackend<DemoResponse>("/api/demo");
+  if (remote) {
+    // Backend MVP returns a single proposal; enrich with local catalog if needed.
+    if (!("proposals" in remote) || !(remote as DemoResponse & { proposals?: ProposalInput[] }).proposals) {
+      const local = buildDemoBundle(activeId ?? remote.proposal.proposal_id ?? "prop-demo-001");
+      return {
+        ...remote,
+        proposals: local.proposals,
+      } as DemoResponse;
+    }
+    return remote;
+  }
+  return buildDemoBundle(activeId);
+}
+
+export async function calculateMargin(
+  proposal: ProposalInput,
+): Promise<{ margin: MarginBreakdown }> {
+  const remote = await tryBackend<{ margin: MarginBreakdown }>("/api/margin/calculate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify(proposal),
   });
-  if (!res.ok) {
-    throw new Error(`API ${path} failed (${res.status})`);
-  }
-  return res.json() as Promise<T>;
+  if (remote) return remote;
+  return { margin: calcLocal(cloneProposal(proposal)) };
 }
 
-export function fetchDemo(): Promise<DemoResponse> {
-  return getJson<DemoResponse>("/api/demo");
-}
-
-export function calculateMargin(proposal: ProposalInput): Promise<{ margin: MarginBreakdown }> {
-  return postJson<{ margin: MarginBreakdown }>("/api/margin/calculate", proposal);
-}
+export { DEMO_PROPOSALS } from "@/lib/engine";

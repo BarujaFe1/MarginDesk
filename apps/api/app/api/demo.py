@@ -9,7 +9,8 @@ router = APIRouter(tags=["demo"])
 
 @router.get("/demo")
 def get_demo() -> dict:
-    proposal = ProposalInput.model_validate(demo_data.demo_proposal())
+    proposals = [ProposalInput.model_validate(p) for p in demo_data.demo_proposals()]
+    proposal = proposals[0]
     margin = calculate_margin(proposal)
     projects = demo_data.demo_tracker_projects()
     at_risk = sum(1 for p in projects if p["alerts"])
@@ -18,7 +19,7 @@ def get_demo() -> dict:
     pipeline = sum(p["price"] for p in projects)
 
     summary = DemoSummary(
-        proposals=3,
+        proposals=len(proposals),
         active_projects=len(projects),
         avg_planned_margin_pct=round(avg_planned, 1),
         avg_actual_margin_pct=round(avg_actual, 1),
@@ -28,6 +29,7 @@ def get_demo() -> dict:
     return {
         "summary": summary.model_dump(),
         "proposal": proposal.model_dump(),
+        "proposals": [p.model_dump() for p in proposals],
         "margin": margin,
         "cost_library": demo_data.demo_cost_library(),
         "projects": projects,

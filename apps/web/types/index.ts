@@ -88,6 +88,8 @@ export interface DemoSummary {
 export interface DemoResponse {
   summary: DemoSummary;
   proposal: ProposalInput;
+  /** Full lab catalog — three synthetic proposals. */
+  proposals?: ProposalInput[];
   margin: MarginBreakdown;
   cost_library: CostItem[];
   projects: TrackerProject[];

@@ -20,6 +20,7 @@ function brl(n: number) {
 
 export default function HomePage() {
   const [summary, setSummary] = useState<DemoSummary | null>(null);
+  const [proposals, setProposals] = useState<ProposalInput[]>([]);
   const [proposal, setProposal] = useState<ProposalInput | null>(null);
   const [margin, setMargin] = useState<MarginBreakdown | null>(null);
   const [projects, setProjects] = useState<TrackerProject[]>([]);
@@ -27,18 +28,36 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function loadDemo() {
+  function loadDemo(activeId?: string) {
     startTransition(async () => {
       try {
         setError(null);
-        const data = await fetchDemo();
+        const data = await fetchDemo(activeId);
+        const catalog = data.proposals?.length
+          ? data.proposals
+          : data.proposal
+            ? [data.proposal]
+            : [];
+        setProposals(catalog);
         setSummary(data.summary);
-        setProposal(data.proposal);
-        setMargin(data.margin);
         setProjects(data.projects);
         setCostLibrary(data.cost_library);
+
+        const active =
+          (activeId ? catalog.find((p) => p.proposal_id === activeId) : null) ??
+          catalog.find((p) => p.proposal_id === data.proposal.proposal_id) ??
+          catalog[0] ??
+          data.proposal;
+
+        setProposal(active);
+        if (active.proposal_id === data.proposal.proposal_id) {
+          setMargin(data.margin);
+        } else {
+          const res = await calculateMargin(active);
+          setMargin(res.margin);
+        }
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load MarginDesk API");
+        setError(e instanceof Error ? e.message : "Failed to load MarginDesk");
       }
     });
   }
@@ -47,11 +66,29 @@ export default function HomePage() {
     loadDemo();
   }, []);
 
+  function selectProposal(id: string) {
+    const next = proposals.find((p) => p.proposal_id === id);
+    if (!next) return;
+    startTransition(async () => {
+      try {
+        setError(null);
+        setProposal(next);
+        const res = await calculateMargin(next);
+        setMargin(res.margin);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Calculate failed");
+      }
+    });
+  }
+
   function recalc(next: ProposalInput) {
     startTransition(async () => {
       try {
         setError(null);
         setProposal(next);
+        setProposals((prev) =>
+          prev.map((p) => (p.proposal_id === next.proposal_id ? next : p)),
+        );
         const res = await calculateMargin(next);
         setMargin(res.margin);
       } catch (e) {
@@ -76,7 +113,7 @@ export default function HomePage() {
   return (
     <main>
       <section className="hero">
-        <p className="muted">Margin desk · scope risk · planned vs actual</p>
+        <p className="muted">MVP lab · margin desk · scope risk · planned vs actual</p>
         <h1 className="brand">MarginDesk</h1>
         <p className="lede">
           Transforma proposta em decisão de margem: preço mínimo, margem esperada,
@@ -87,22 +124,53 @@ export default function HomePage() {
 
       {error ? (
         <div className="notice">
-          API indisponível ({error}). Suba o backend em <code>apps/api</code> na
-          porta 8000.
+          Falha ao carregar o lab ({error}). O motor client-side deve funcionar
+          offline; se o erro persistir, recarregue a página.
         </div>
       ) : null}
 
       <section className="panel">
+        <h2>3 propostas demo</h2>
+        <p className="muted" style={{ marginTop: 0, marginBottom: "0.85rem" }}>
+          Selecione um caso sintético para inspecionar floor de preço, risco de
+          escopo e lucro planejado.
+        </p>
+        <div className="proposal-switcher">
+          {proposals.map((p) => {
+            const active = p.proposal_id === proposal?.proposal_id;
+            return (
+              <button
+                key={p.proposal_id ?? p.project_title}
+                type="button"
+                className={active ? "proposal-card active" : "proposal-card"}
+                disabled={pending}
+                onClick={() => p.proposal_id && selectProposal(p.proposal_id)}
+              >
+                <strong>{p.project_title}</strong>
+                <span className="muted">{p.client_name}</span>
+                <span className="money">{brl(p.price)}</span>
+                <span className="muted">meta {p.target_margin_pct}%</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="panel">
         <h2>Painel de lucro</h2>
         <div className="controls">
-          <button type="button" disabled={pending} onClick={loadDemo}>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => loadDemo(proposal?.proposal_id ?? undefined)}
+          >
             {pending ? "Calculando…" : "Recarregar demo"}
           </button>
         </div>
         <div className="grid">
           <div className="kpi">
-            <span>Projetos ativos</span>
-            <strong>{summary?.active_projects ?? "—"}</strong>
+            <span>Propostas demo</span>
+            <strong>{summary?.proposals ?? proposals.length ?? "—"}</strong>
           </div>
           <div className="kpi">
             <span>Margem planejada</span>

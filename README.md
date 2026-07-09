@@ -327,6 +327,15 @@ Planned vs Actual Profit Report
 - **Python** v3.10 ou superior (preferencialmente Python 3.12).
 - **Git**
 
+### Live Demo
+Demo pública (frontend-first, motor de margem no browser):
+
+```txt
+https://margindesk.vercel.app
+```
+
+*(URL final confirmada após o deploy Vercel; se o slug mudar, a homepage do GitHub e o portfólio apontam para a URL canônica.)*
+
 ### Opção 1 — Execução integrada no Windows
 Na pasta raiz do projeto, dê dois cliques ou execute no console:
 ```bash

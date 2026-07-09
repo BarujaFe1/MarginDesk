@@ -95,27 +95,179 @@ def _scope_flags() -> list[dict[str, Any]]:
     ]
 
 
+def _flags(**checked: bool) -> list[dict[str, Any]]:
+    items = [dict(f) for f in _scope_flags()]
+    for item in items:
+        item["checked"] = bool(checked.get(item["flag_id"], False))
+    return items
+
+
+def demo_proposals() -> list[dict[str, Any]]:
+    return [
+        {
+            "proposal_id": "prop-demo-001",
+            "client_name": "Studio Norte",
+            "project_title": "Rebrand + landing page",
+            "niche": "design_dev",
+            "currency": "BRL",
+            "target_margin_pct": 42.0,
+            "price": 14500.0,
+            "services": _services(),
+            "costs": _costs(),
+            "scope_flags": _flags(
+                **{
+                    "risk-open-scope": True,
+                    "risk-no-brief": True,
+                    "risk-rush": True,
+                }
+            ),
+            "contingency_hours": 6.0,
+            "payment_terms": "40% kickoff / 40% mid / 20% delivery",
+            "exclusions": [
+                "Copywriting longo",
+                "Fotografia original",
+                "Integrações de pagamento",
+                "Suporte pós-entrega além de 15 dias",
+            ],
+        },
+        {
+            "proposal_id": "prop-demo-002",
+            "client_name": "Agência Lume",
+            "project_title": "Social media retainer (setup)",
+            "niche": "social_media",
+            "currency": "BRL",
+            "target_margin_pct": 38.0,
+            "price": 6800.0,
+            "services": [
+                {
+                    "service_id": "svc-strategy",
+                    "name": "Estratégia editorial (30 dias)",
+                    "hours": 12.0,
+                    "hourly_rate": 110.0,
+                    "notes": "Pilares, calendário, tom",
+                },
+                {
+                    "service_id": "svc-design",
+                    "name": "Templates + kit visual",
+                    "hours": 16.0,
+                    "hourly_rate": 100.0,
+                    "notes": "Carrosséis, stories, capa",
+                },
+                {
+                    "service_id": "svc-ops",
+                    "name": "Operação inicial + handoff",
+                    "hours": 8.0,
+                    "hourly_rate": 90.0,
+                    "notes": "Processo, pasta, checklist",
+                },
+            ],
+            "costs": [
+                {
+                    "cost_id": "cost-canva",
+                    "label": "Canva Pro (3 meses)",
+                    "category": "tools",
+                    "amount": 120.0,
+                    "recurring": True,
+                },
+                {
+                    "cost_id": "cost-stock2",
+                    "label": "Banco de imagens",
+                    "category": "assets",
+                    "amount": 49.0,
+                    "recurring": True,
+                },
+            ],
+            "scope_flags": _flags(
+                **{
+                    "risk-open-scope": True,
+                    "risk-unpaid-discovery": True,
+                    "risk-no-brief": True,
+                }
+            ),
+            "contingency_hours": 4.0,
+            "payment_terms": "50% upfront / 50% on delivery",
+            "exclusions": [
+                "Gestão de anúncios pagos",
+                "Community management diário",
+                "Produção de vídeo longa",
+            ],
+        },
+        {
+            "proposal_id": "prop-demo-003",
+            "client_name": "Consultoria Atlas",
+            "project_title": "Dashboard operacional MVP",
+            "niche": "dev_shop",
+            "currency": "BRL",
+            "target_margin_pct": 40.0,
+            "price": 22000.0,
+            "services": [
+                {
+                    "service_id": "svc-discovery",
+                    "name": "Discovery técnico pago",
+                    "hours": 12.0,
+                    "hourly_rate": 150.0,
+                    "notes": "Métricas, fontes, wireframes",
+                },
+                {
+                    "service_id": "svc-build",
+                    "name": "Dashboard Next.js + API",
+                    "hours": 64.0,
+                    "hourly_rate": 145.0,
+                    "notes": "KPIs, filtros, export CSV",
+                },
+                {
+                    "service_id": "svc-qa",
+                    "name": "QA + documentação",
+                    "hours": 12.0,
+                    "hourly_rate": 120.0,
+                    "notes": "Casos de teste e handoff",
+                },
+                {
+                    "service_id": "svc-coord",
+                    "name": "Coordenação",
+                    "hours": 8.0,
+                    "hourly_rate": 110.0,
+                    "notes": "Sprints e demos",
+                },
+            ],
+            "costs": [
+                {
+                    "cost_id": "cost-host",
+                    "label": "Hosting + DB (3 meses)",
+                    "category": "infra",
+                    "amount": 240.0,
+                    "recurring": False,
+                },
+                {
+                    "cost_id": "cost-charts",
+                    "label": "Licença charts (ano)",
+                    "category": "licenses",
+                    "amount": 180.0,
+                    "recurring": False,
+                },
+                {
+                    "cost_id": "cost-qa",
+                    "label": "QA externo (1 dia)",
+                    "category": "subcontract",
+                    "amount": 450.0,
+                    "recurring": False,
+                },
+            ],
+            "scope_flags": _flags(**{"risk-third-party": True}),
+            "contingency_hours": 8.0,
+            "payment_terms": "30% kickoff / 40% mid / 30% delivery",
+            "exclusions": [
+                "Integração com ERP legado",
+                "App mobile nativo",
+                "Treinamento presencial",
+                "SLA 24/7",
+            ],
+        },
+    ]
+
+
 def demo_proposal() -> dict[str, Any]:
-    return {
-        "proposal_id": "prop-demo-001",
-        "client_name": "Studio Norte",
-        "project_title": "Rebrand + landing page",
-        "niche": "design_dev",
-        "currency": "BRL",
-        "target_margin_pct": 42.0,
-        "price": 14500.0,
-        "services": _services(),
-        "costs": _costs(),
-        "scope_flags": _scope_flags(),
-        "contingency_hours": 6.0,
-        "payment_terms": "40% kickoff / 40% mid / 20% delivery",
-        "exclusions": [
-            "Copywriting longo",
-            "Fotografia original",
-            "Integrações de pagamento",
-            "Suporte pós-entrega além de 15 dias",
-        ],
-    }
+    return demo_proposals()[0]
 
 
 def demo_tracker_projects() -> list[dict[str, Any]]:

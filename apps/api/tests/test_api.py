@@ -51,7 +51,14 @@ def test_demo_endpoint() -> None:
     assert res.status_code == 200
     body = res.json()
     assert body["summary"]["active_projects"] == 3
+    assert body["summary"]["proposals"] == 3
     assert len(body["projects"]) == 3
+    assert len(body["proposals"]) == 3
+    assert {p["proposal_id"] for p in body["proposals"]} == {
+        "prop-demo-001",
+        "prop-demo-002",
+        "prop-demo-003",
+    }
 
 
 def test_tracker_endpoint() -> None:

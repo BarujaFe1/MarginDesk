@@ -1,0 +1,4 @@
+project_id,client_name,project_title,planned_hours,actual_hours,price,planned_margin_pct,actual_margin_pct
+prj-001,Studio Norte,Rebrand + landing page,82,71.5,14500,32.4,37.1
+prj-002,Agência Lume,Social media retainer (setup),36,48,6800,38.2,17.6
+prj-003,Consultoria Atlas,Dashboard operacional MVP,96,102,22000,40.0,37.1

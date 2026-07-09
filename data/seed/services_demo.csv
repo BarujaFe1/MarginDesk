@@ -1,0 +1,4 @@
+service_id,name,hours,hourly_rate,notes
+svc-brand,Brand system + guidelines,28,120,Logo refresh
+svc-site,Landing page (Next.js),40,140,Responsive landing
+svc-pm,Project coordination,8,100,Kickoff and reviews

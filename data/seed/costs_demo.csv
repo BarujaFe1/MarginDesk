@@ -1,0 +1,6 @@
+cost_id,label,category,amount,recurring
+cost-stock,Stock photography pack,assets,180,false
+cost-fonts,Premium font license,licenses,120,false
+cost-hosting,Hosting (3 months),infra,90,false
+lib-figma,Figma Professional (mês),tools,75,true
+lib-copy,Copywriter freela (pacote),subcontract,800,false

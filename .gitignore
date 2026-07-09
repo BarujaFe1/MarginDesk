@@ -2,6 +2,7 @@
 node_modules/
 .next/
 out/
+apps/web/out/
 build/
 dist/
 .npm
@@ -53,3 +54,4 @@ temp/
 # Uploaded user data (keep seed only)
 data/uploads/*
 !data/uploads/.gitkeep
+.vercel

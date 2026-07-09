@@ -328,13 +328,13 @@ Planned vs Actual Profit Report
 - **Git**
 
 ### Live Demo
-Demo pública (frontend-first, motor de margem no browser):
+Demo pública (frontend-first, motor de margem no browser — 3 propostas sintéticas):
 
 ```txt
-https://margindesk.vercel.app
+https://barujafe1.github.io/MarginDesk/
 ```
 
-*(URL final confirmada após o deploy Vercel; se o slug mudar, a homepage do GitHub e o portfólio apontam para a URL canônica.)*
+GitHub homepage do repositório aponta para a mesma URL.
 
 ### Opção 1 — Execução integrada no Windows
 Na pasta raiz do projeto, dê dois cliques ou execute no console:

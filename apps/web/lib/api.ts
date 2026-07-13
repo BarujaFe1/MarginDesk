@@ -8,7 +8,7 @@ import type { DemoResponse, MarginBreakdown, ProposalInput } from "@/types";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 /**
- * Prefer client-side margin engine for the Vercel lab demo.
+ * Prefer client-side margin engine for the Vercel/GitHub Pages lab demo.
  * Optional FastAPI backend when NEXT_PUBLIC_API_URL is set (local full stack).
  */
 async function tryBackend<T>(path: string, init?: RequestInit): Promise<T | null> {
@@ -25,13 +25,9 @@ async function tryBackend<T>(path: string, init?: RequestInit): Promise<T | null
 export async function fetchDemo(activeId?: string): Promise<DemoResponse> {
   const remote = await tryBackend<DemoResponse>("/api/demo");
   if (remote) {
-    // Backend MVP returns a single proposal; enrich with local catalog if needed.
-    if (!("proposals" in remote) || !(remote as DemoResponse & { proposals?: ProposalInput[] }).proposals) {
+    if (!remote.proposals?.length) {
       const local = buildDemoBundle(activeId ?? remote.proposal.proposal_id ?? "prop-demo-001");
-      return {
-        ...remote,
-        proposals: local.proposals,
-      } as DemoResponse;
+      return { ...remote, proposals: local.proposals };
     }
     return remote;
   }

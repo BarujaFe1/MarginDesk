@@ -6,6 +6,7 @@ import { ProjectMarginTracker } from "@/components/ProjectMarginTracker";
 import { ProposalPreview } from "@/components/ProposalPreview";
 import { ScopeRiskChecklist } from "@/components/ScopeRiskChecklist";
 import { calculateMargin, fetchDemo } from "@/lib/api";
+import { brl, pct } from "@/lib/format";
 import type {
   CostItem,
   DemoSummary,
@@ -13,10 +14,6 @@ import type {
   ProposalInput,
   TrackerProject,
 } from "@/types";
-
-function brl(n: number) {
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
 
 export default function HomePage() {
   const [summary, setSummary] = useState<DemoSummary | null>(null);
@@ -26,6 +23,7 @@ export default function HomePage() {
   const [projects, setProjects] = useState<TrackerProject[]>([]);
   const [costLibrary, setCostLibrary] = useState<CostItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [booting, setBooting] = useState(true);
   const [pending, startTransition] = useTransition();
 
   function loadDemo(activeId?: string) {
@@ -58,6 +56,8 @@ export default function HomePage() {
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load MarginDesk");
+      } finally {
+        setBooting(false);
       }
     });
   }
@@ -110,8 +110,15 @@ export default function HomePage() {
     recalc({ ...proposal, scope_flags });
   }
 
+  const busy = pending || booting;
+
   return (
     <main>
+      <div className="lab-banner" role="note">
+        <strong>Lab demo</strong> — dados sintéticos, motor de margem no browser.
+        Não é SaaS de produção, ERP ou gerador de PDF.
+      </div>
+
       <section className="hero">
         <p className="muted">MVP lab · margin desk · scope risk · planned vs actual</p>
         <h1 className="brand">MarginDesk</h1>
@@ -123,65 +130,73 @@ export default function HomePage() {
       </section>
 
       {error ? (
-        <div className="notice">
+        <div className="notice" role="alert">
           Falha ao carregar o lab ({error}). O motor client-side deve funcionar
           offline; se o erro persistir, recarregue a página.
         </div>
       ) : null}
 
-      <section className="panel">
-        <h2>3 propostas demo</h2>
+      <section className="panel" aria-labelledby="demo-proposals-title">
+        <h2 id="demo-proposals-title">3 propostas demo</h2>
         <p className="muted" style={{ marginTop: 0, marginBottom: "0.85rem" }}>
           Selecione um caso sintético para inspecionar floor de preço, risco de
-          escopo e lucro planejado.
+          escopo e lucro planejado. Valores planejados vêm do mesmo motor de margem.
         </p>
-        <div className="proposal-switcher">
-          {proposals.map((p) => {
-            const active = p.proposal_id === proposal?.proposal_id;
-            return (
-              <button
-                key={p.proposal_id ?? p.project_title}
-                type="button"
-                className={active ? "proposal-card active" : "proposal-card"}
-                disabled={pending}
-                onClick={() => p.proposal_id && selectProposal(p.proposal_id)}
-              >
-                <strong>{p.project_title}</strong>
-                <span className="muted">{p.client_name}</span>
-                <span className="money">{brl(p.price)}</span>
-                <span className="muted">meta {p.target_margin_pct}%</span>
-              </button>
-            );
-          })}
+        <div
+          className="proposal-switcher"
+          role="tablist"
+          aria-label="Propostas demo"
+        >
+          {busy && proposals.length === 0
+            ? [0, 1, 2].map((i) => <div key={i} className="skeleton-card" />)
+            : proposals.map((p) => {
+                const active = p.proposal_id === proposal?.proposal_id;
+                return (
+                  <button
+                    key={p.proposal_id ?? p.project_title}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    className={active ? "proposal-card active" : "proposal-card"}
+                    disabled={busy}
+                    onClick={() => p.proposal_id && selectProposal(p.proposal_id)}
+                  >
+                    <strong>{p.project_title}</strong>
+                    <span className="muted">{p.client_name}</span>
+                    <span className="money">{brl(p.price)}</span>
+                    <span className="muted">meta {p.target_margin_pct}%</span>
+                  </button>
+                );
+              })}
         </div>
       </section>
 
-      <section className="panel">
-        <h2>Painel de lucro</h2>
+      <section className="panel" aria-labelledby="profit-panel-title">
+        <h2 id="profit-panel-title">Painel de lucro</h2>
         <div className="controls">
           <button
             type="button"
-            disabled={pending}
+            disabled={busy}
             onClick={() => loadDemo(proposal?.proposal_id ?? undefined)}
           >
-            {pending ? "Calculando…" : "Recarregar demo"}
+            {busy ? "Calculando…" : "Recarregar demo"}
           </button>
         </div>
         <div className="grid">
           <div className="kpi">
             <span>Propostas demo</span>
-            <strong>{summary?.proposals ?? proposals.length ?? "—"}</strong>
+            <strong>{summary?.proposals ?? (proposals.length || "—")}</strong>
           </div>
           <div className="kpi">
             <span>Margem planejada</span>
             <strong>
-              {summary ? `${summary.avg_planned_margin_pct.toFixed(1)}%` : "—"}
+              {summary ? pct(summary.avg_planned_margin_pct) : "—"}
             </strong>
           </div>
           <div className="kpi">
             <span>Margem realizada</span>
             <strong>
-              {summary ? `${summary.avg_actual_margin_pct.toFixed(1)}%` : "—"}
+              {summary ? pct(summary.avg_actual_margin_pct) : "—"}
             </strong>
           </div>
           <div className="kpi">
@@ -210,29 +225,35 @@ export default function HomePage() {
 
       <div className="layout-2">
         <ProposalPreview proposal={proposal} margin={margin} />
-        <section className="panel">
-          <h2>Biblioteca de custos</h2>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Categoria</th>
-                <th>Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {costLibrary.map((c) => (
-                <tr key={c.cost_id}>
-                  <td>
-                    {c.label}
-                    {c.recurring ? <div className="muted">recorrente</div> : null}
-                  </td>
-                  <td className="muted">{c.category}</td>
-                  <td className="money">{brl(c.amount)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <section className="panel" aria-labelledby="cost-lib-title">
+          <h2 id="cost-lib-title">Biblioteca de custos</h2>
+          {costLibrary.length === 0 ? (
+            <div className="skeleton-block" />
+          ) : (
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Item</th>
+                    <th scope="col">Categoria</th>
+                    <th scope="col">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {costLibrary.map((c) => (
+                    <tr key={c.cost_id}>
+                      <td>
+                        {c.label}
+                        {c.recurring ? <div className="muted">recorrente</div> : null}
+                      </td>
+                      <td className="muted">{c.category}</td>
+                      <td className="money">{brl(c.amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       </div>
 

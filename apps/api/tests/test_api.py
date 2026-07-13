@@ -33,7 +33,8 @@ def test_margin_math_demo_proposal() -> None:
     assert margin["labor_cost"] == labor
     assert margin["direct_costs"] == costs
     assert abs(margin["margin_pct"] - round(expected_pct, 2)) < 0.02
-    assert margin["risk_level"] in {"low", "medium", "high", "critical"}
+    assert margin["risk_level"] == "high"
+    assert margin["risk_score"] == 44.0
     assert "Escopo aberto" in " ".join(margin["risk_flags_triggered"])
 
 
@@ -73,3 +74,34 @@ def test_min_price_for_target() -> None:
     margin = calculate_margin(proposal)
     assert margin["min_price_for_target"] > margin["total_cost"]
     assert margin["price_gap_to_target"] > 0
+
+
+def test_tracker_planned_matches_engine() -> None:
+    for raw in demo_data.demo_proposals():
+        proposal = ProposalInput.model_validate(raw)
+        margin = calculate_margin(proposal)
+        row = next(
+            p
+            for p in demo_data.demo_tracker_projects()
+            if p["proposal_id"] == proposal.proposal_id
+        )
+        assert row["planned_cost"] == margin["total_cost"]
+        assert row["planned_margin_pct"] == margin["margin_pct"]
+        assert row["planned_hours"] == margin["planned_hours"]
+
+
+def test_zero_price_is_safe() -> None:
+    proposal = ProposalInput.model_validate(demo_data.demo_proposal())
+    proposal.price = 0
+    margin = calculate_margin(proposal)
+    assert margin["margin_pct"] == 0
+    assert margin["profit"] == -margin["total_cost"]
+
+
+def test_target_clamp_at_95() -> None:
+    proposal = ProposalInput.model_validate(demo_data.demo_proposal())
+    proposal.target_margin_pct = 95
+    margin = calculate_margin(proposal)
+    expected = margin["total_cost"] / 0.05
+    assert abs(margin["min_price_for_target"] - expected) < 0.2
+    assert margin["min_price_for_target"] > margin["total_cost"] * 10

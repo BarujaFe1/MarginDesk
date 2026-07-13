@@ -4,6 +4,8 @@ from typing import Any
 
 from app.models.schemas import ProposalInput
 
+MAX_TARGET_MARGIN_PCT = 95.0
+
 
 def _risk_level(score: float) -> str:
     if score >= 55:
@@ -44,28 +46,24 @@ def _recommendation(
 
 def calculate_margin(proposal: ProposalInput) -> dict[str, Any]:
     labor_cost = sum(s.hours * s.hourly_rate for s in proposal.services)
-    planned_hours = sum(s.hours for s in proposal.services)
-    avg_rate = (labor_cost / planned_hours) if planned_hours > 0 else 0.0
+    service_hours = sum(s.hours for s in proposal.services)
+    avg_rate = (labor_cost / service_hours) if service_hours > 0 else 0.0
     contingency_cost = proposal.contingency_hours * avg_rate
     direct_costs = sum(c.amount for c in proposal.costs)
     total_cost = labor_cost + direct_costs + contingency_cost
-    price = proposal.price
+    price = max(0.0, proposal.price)
     profit = price - total_cost
     margin_pct = (profit / price * 100.0) if price > 0 else 0.0
 
-    target = proposal.target_margin_pct
-    # price = total_cost / (1 - target/100)
-    if target >= 100:
-        min_price = total_cost
-    else:
-        min_price = total_cost / (1.0 - target / 100.0)
+    target = min(MAX_TARGET_MARGIN_PCT, max(0.0, proposal.target_margin_pct))
+    min_price = total_cost / (1.0 - target / 100.0)
     price_gap = max(0.0, min_price - price)
 
     triggered = [f.label for f in proposal.scope_flags if f.checked]
     risk_score = float(sum(f.weight for f in proposal.scope_flags if f.checked))
     risk_level = _risk_level(risk_score)
 
-    effective_hourly = (price / planned_hours) if planned_hours > 0 else 0.0
+    effective_hourly = (price / service_hours) if service_hours > 0 else 0.0
 
     return {
         "labor_cost": round(labor_cost, 2),
@@ -77,7 +75,7 @@ def calculate_margin(proposal: ProposalInput) -> dict[str, Any]:
         "margin_pct": round(margin_pct, 2),
         "min_price_for_target": round(min_price, 2),
         "price_gap_to_target": round(price_gap, 2),
-        "planned_hours": round(planned_hours + proposal.contingency_hours, 2),
+        "planned_hours": round(service_hours + proposal.contingency_hours, 2),
         "effective_hourly": round(effective_hourly, 2),
         "risk_score": round(risk_score, 1),
         "risk_level": risk_level,

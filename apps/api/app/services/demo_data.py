@@ -271,60 +271,66 @@ def demo_proposal() -> dict[str, Any]:
 
 
 def demo_tracker_projects() -> list[dict[str, Any]]:
-    return [
-        {
+    """Planned_* derived from margin engine; actual_* are delivery narrative."""
+    from app.models.schemas import ProposalInput
+    from app.services.margin_engine import calculate_margin
+
+    delivery = {
+        "prop-demo-001": {
             "project_id": "prj-001",
-            "proposal_id": "prop-demo-001",
-            "client_name": "Studio Norte",
-            "project_title": "Rebrand + landing page",
-            "planned_hours": 82.0,
             "actual_hours": 71.5,
-            "planned_cost": 9800.0,
             "actual_cost": 9120.0,
-            "price": 14500.0,
-            "planned_margin_pct": 32.4,
-            "actual_margin_pct": 37.1,
             "scope_change_count": 1,
-            "status": "in_delivery",
             "alerts": [],
         },
-        {
+        "prop-demo-002": {
             "project_id": "prj-002",
-            "proposal_id": "prop-demo-002",
-            "client_name": "Agência Lume",
-            "project_title": "Social media retainer (setup)",
-            "planned_hours": 36.0,
             "actual_hours": 48.0,
-            "planned_cost": 4200.0,
             "actual_cost": 5600.0,
-            "price": 6800.0,
-            "planned_margin_pct": 38.2,
-            "actual_margin_pct": 17.6,
             "scope_change_count": 3,
-            "status": "in_delivery",
             "alerts": [
                 "Horas acima do planejado (+33%)",
-                "Margem abaixo do alvo (17.6% vs 38%)",
+                "Margem realizada abaixo do planejado",
                 "3 mudanças de escopo sem aditivo",
             ],
         },
-        {
+        "prop-demo-003": {
             "project_id": "prj-003",
-            "proposal_id": "prop-demo-003",
-            "client_name": "Consultoria Atlas",
-            "project_title": "Dashboard operacional MVP",
-            "planned_hours": 96.0,
             "actual_hours": 102.0,
-            "planned_cost": 13200.0,
             "actual_cost": 13840.0,
-            "price": 22000.0,
-            "planned_margin_pct": 40.0,
-            "actual_margin_pct": 37.1,
             "scope_change_count": 0,
-            "status": "in_delivery",
             "alerts": ["Pequeno estouro de horas (+6%)"],
         },
-    ]
+    }
+
+    rows: list[dict[str, Any]] = []
+    for raw in demo_proposals():
+        proposal = ProposalInput.model_validate(raw)
+        margin = calculate_margin(proposal)
+        actual = delivery[str(proposal.proposal_id)]
+        price = float(proposal.price)
+        actual_margin = (
+            round(((price - actual["actual_cost"]) / price) * 100, 1) if price > 0 else 0.0
+        )
+        rows.append(
+            {
+                "project_id": actual["project_id"],
+                "proposal_id": proposal.proposal_id,
+                "client_name": proposal.client_name,
+                "project_title": proposal.project_title,
+                "planned_hours": margin["planned_hours"],
+                "actual_hours": actual["actual_hours"],
+                "planned_cost": margin["total_cost"],
+                "actual_cost": actual["actual_cost"],
+                "price": price,
+                "planned_margin_pct": margin["margin_pct"],
+                "actual_margin_pct": actual_margin,
+                "scope_change_count": actual["scope_change_count"],
+                "status": "in_delivery",
+                "alerts": list(actual["alerts"]),
+            }
+        )
+    return rows
 
 
 def demo_cost_library() -> list[dict[str, Any]]:

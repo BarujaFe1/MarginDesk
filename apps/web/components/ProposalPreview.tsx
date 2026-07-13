@@ -1,10 +1,7 @@
 "use client";
 
 import type { ProposalInput, MarginBreakdown } from "@/types";
-
-function brl(n: number) {
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
+import { brl, pct } from "@/lib/format";
 
 export function ProposalPreview({
   proposal,
@@ -14,12 +11,17 @@ export function ProposalPreview({
   margin: MarginBreakdown | null;
 }) {
   if (!proposal || !margin) {
-    return null;
+    return (
+      <section className="panel" aria-busy="true">
+        <h2>Proposal preview</h2>
+        <div className="skeleton-block" />
+      </section>
+    );
   }
 
   return (
-    <section className="panel">
-      <h2>Proposal preview</h2>
+    <section className="panel" aria-labelledby="proposal-preview-title">
+      <h2 id="proposal-preview-title">Proposal preview</h2>
       <p className="muted">
         {proposal.client_name} · {proposal.niche}
       </p>
@@ -46,7 +48,7 @@ export function ProposalPreview({
         </div>
         <div className="kpi">
           <span>Margem interna</span>
-          <strong>{margin.margin_pct.toFixed(1)}%</strong>
+          <strong>{pct(margin.margin_pct)}</strong>
         </div>
         <div className="kpi">
           <span>Risco de escopo</span>

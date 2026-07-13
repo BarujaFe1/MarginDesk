@@ -324,6 +324,53 @@ input[type="range"] {
   font-size: 1.02rem;
 }
 
+.demo-guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.demo-step {
+  width: 100%;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  text-align: left;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(196, 168, 120, 0.18);
+  background: rgba(8, 12, 16, 0.4);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.demo-step.active {
+  border-color: rgba(212, 168, 75, 0.7);
+  background: rgba(212, 168, 75, 0.1);
+}
+
+.demo-step-num {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(212, 168, 75, 0.45);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-family: var(--font-display);
+}
+
+.demo-step-detail {
+  display: block;
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
 .lab-banner {
   margin: 0 0 0.75rem;
   padding: 0.7rem 0.9rem;

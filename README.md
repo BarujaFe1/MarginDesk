@@ -52,15 +52,17 @@ A dor é cara: margem destruída e capacidade ocupada com projeto ruim.
 - tracker **planejado vs realizado**.
 
 > Posicionamento: **lucro e proteção de margem**, não estética de PDF.
+>
+> **Não confundir com:** [ProposalRoom](https://github.com/BarujaFe1/ProposalRoom) (sala/aceite/PDF) nem [AgendaYield](https://github.com/BarujaFe1/AgendaYield) (ocupação/no-show).
 
 ### Live Demo
 
 https://barujafe1.github.io/MarginDesk/
 
-Três propostas sintéticas: Rebrand + landing, Social media setup, Dashboard MVP.
+Três propostas sintéticas + roteiro de demo (~4 min) na própria UI.
 
 <p align="center">
-  <img src="./assets/screenshots/01-margin-calculator.png" alt="Margin calculator preview" width="100%" />
+  <img src="./assets/screenshots/01-margin-calculator.png" alt="MarginDesk lab overview" width="100%" />
 </p>
 
 ---

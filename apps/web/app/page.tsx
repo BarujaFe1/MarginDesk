@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { DemoGuide } from "@/components/DemoGuide";
 import { MarginCalculator } from "@/components/MarginCalculator";
 import { ProjectMarginTracker } from "@/components/ProjectMarginTracker";
 import { ProposalPreview } from "@/components/ProposalPreview";
@@ -24,6 +25,7 @@ export default function HomePage() {
   const [costLibrary, setCostLibrary] = useState<CostItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [booting, setBooting] = useState(true);
+  const [guideStep, setGuideStep] = useState("1");
   const [pending, startTransition] = useTransition();
 
   function loadDemo(activeId?: string) {
@@ -110,13 +112,26 @@ export default function HomePage() {
     recalc({ ...proposal, scope_flags });
   }
 
+  function onGuideSelect(stepId: string) {
+    setGuideStep(stepId);
+    if (stepId === "1" || stepId === "2" || stepId === "3") {
+      const norte = proposals.find((p) => p.proposal_id === "prop-demo-001");
+      if (norte?.proposal_id) selectProposal(norte.proposal_id);
+    }
+    if (stepId === "4") {
+      const lume = proposals.find((p) => p.proposal_id === "prop-demo-002");
+      if (lume?.proposal_id) selectProposal(lume.proposal_id);
+    }
+  }
+
   const busy = pending || booting;
 
   return (
     <main>
       <div className="lab-banner" role="note">
         <strong>Lab demo</strong> — dados sintéticos, motor de margem no browser.
-        Não é SaaS de produção, ERP ou gerador de PDF.
+        Foco em <em>preço mínimo / risco / lucro</em>. Não é gerador de PDF
+        (ProposalRoom), nem yield de agenda (AgendaYield), nem ERP/CRM.
       </div>
 
       <section className="hero">
@@ -135,6 +150,8 @@ export default function HomePage() {
           offline; se o erro persistir, recarregue a página.
         </div>
       ) : null}
+
+      <DemoGuide activeStep={guideStep} onSelect={onGuideSelect} />
 
       <section className="panel" aria-labelledby="demo-proposals-title">
         <h2 id="demo-proposals-title">3 propostas demo</h2>
